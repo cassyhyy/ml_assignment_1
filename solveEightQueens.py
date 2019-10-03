@@ -34,7 +34,9 @@ class SolveEightQueens:
         Hint: Modify the stop criterion in this function
         """
         newBoard = board
-        i = 0 
+        i = 0
+        # 记录循环次数
+        loopTimes = 0
         while True:
             if verbose:
                 print("iteration %d" % i)
@@ -42,10 +44,16 @@ class SolveEightQueens:
                 print("# attacks: %s" % str(newBoard.getNumberOfAttacks()))
                 print(newBoard.getCostBoard().toString(True))
             currentNumberOfAttacks = newBoard.getNumberOfAttacks()
+            # 新的停止条件：attacks为0或者循环次数超过30
+            if currentNumberOfAttacks == 0 or loopTimes >= 30:
+                break
             (newBoard, newNumberOfAttacks, newRow, newCol) = newBoard.getBetterBoard()
             i += 1
-            if currentNumberOfAttacks <= newNumberOfAttacks:
-                break
+            if currentNumberOfAttacks <= newNumberOfAttacks and i >= 30:
+                # 如果递归次数超过30并且attack次数一直不减，重新开始一次新的循环
+                i = 0
+                newBoard = Board([[]])
+                loopTimes += 1
         return newBoard
 
 class Board:
@@ -104,6 +112,30 @@ class Board:
             return (betterBoard, minNumOfAttack, newRow, newCol)
         The datatype of minNumOfAttack, newRow and newCol should be int
         """
+        board = self.squareArray
+        costBoard = self.getCostBoard().squareArray
+        minAttacks = []
+        for c in range(8):
+            minAttacks.append(min([r[c] for r in costBoard]))
+        # 得到最小cost
+        minNumOfAttack = min(minAttacks)
+        resultList = []
+        # 依据最小cost，将第一个扫描到的最小cost位置记录为newRow,newCol
+        for c in range(8):
+            board_column = [row[c] for row in board]
+            costBoard_column = [row[c] for row in costBoard]
+            if minNumOfAttack in costBoard_column:
+                newRow = costBoard_column.index(minNumOfAttack)
+                newCol = c
+                oldRow = board_column.index(1)
+                # 结果list，存放newRow,newCol,oldRow，便于通过board转换为betterBoard
+                resultList.append((newRow, newCol, oldRow))
+                # 添加到结果list后重置board
+        # 在结果list中随机取一个
+        (newRow, newCol, oldRow) = resultList[random.randint(0, len(resultList)-1)]
+        board[oldRow][newCol] = 0
+        board[newRow][newCol] = 1
+        return (Board(board), minNumOfAttack, newRow, newCol)
         util.raiseNotDefined()
 
     def getNumberOfAttacks(self):
@@ -112,6 +144,35 @@ class Board:
         This function should return the number of attacks of the current board
         The datatype of the return value should be int
         """
+        board = self.squareArray
+        attacks = [[],[],[],[],[],[],[],[]]
+        for c in range(8):
+            for r in range(8):
+                if board[r][c] == 1:
+                    # 检测同一行是否有attack的
+                    for cc in range(c + 1, 8):
+                        if board[r][cc] == 1:
+                            attacks[c].append(cc)
+                    # 检测斜右下对角是否有attack的
+                    rr = r + 1
+                    cc = c + 1
+                    while rr < 8 and cc < 8:
+                        if board[rr][cc] == 1:
+                            attacks[c].append(cc)
+                        rr += 1
+                        cc += 1
+                    # 检测斜右上对角是否有attack的
+                    rr = r - 1
+                    cc = c + 1
+                    while rr >= 0 and cc < 8:
+                        if board[rr][cc] == 1:
+                            attacks[c].append(cc)
+                        rr -= 1
+                        cc += 1
+        result = 0
+        for queen in attacks:
+            result += len(queen)
+        return result
         util.raiseNotDefined()
 
 if __name__ == "__main__":
