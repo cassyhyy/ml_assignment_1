@@ -454,32 +454,19 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    # TODO:为什么递归计算会让程序遍历更多结点？
     distance = []
     foodPosition = foodGrid.asList()
+    # 用曼哈顿距离先估计离pacman最近的食物距离
     for x,y in foodPosition:
-        # distance.append( ((position[0] - x) ** 2 + (position[1] - y) ** 2) ** 0.5 )
-        heuristic = abs(position[0] - x) + abs(position[1] - y)
-        # dx1 = position[0] - x
-        # dy1 = position[1] - y
-        # dx2 = problem.start[0][0] - x
-        # dy2 = problem.start[0][1] - y
-        # cross = abs(dx1 * dy2 - dx2 * dy1)
-        # heuristic += cross * 0.001
-        distance.append(heuristic)
+        distance.append(abs(position[0] - x) + abs(position[1] - y))
     if len(distance) > 0:
         minPosition = foodPosition[distance.index(min(distance))]
         foodDistance = []
+        # 用曼哈顿距离估计最近食物离其他食物的最远距离
         for x,y in foodPosition:
             foodDistance.append( abs(minPosition[0] - x) + abs(minPosition[1] - y) )
-        return min(distance)+max(foodDistance)
-        # index = distance.index(min(distance))
-        # # 目标结点中，去掉最近的food（foodGrid中置位False），避免重复计算
-        # newPosition = foodPosition[index]
-        # newFoodGrid = foodGrid.copy()
-        # newFoodGrid[newPosition[0]][newPosition[1]] = False
-        # # 递归计算最近food去到其他几个food的距离
-        # return 0.5*min(distance)+0.5*foodHeuristic((newPosition, newFoodGrid), problem)
+        # 返回mazeDistance更加准确
+        return mazeDistance(minPosition, position, problem.startingGameState)+mazeDistance(foodPosition[foodDistance.index(max(foodDistance))],minPosition,problem.startingGameState)
     return 0
 
 class ClosestDotSearchAgent(SearchAgent):
